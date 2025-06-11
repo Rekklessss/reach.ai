@@ -1,0 +1,48 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Project context
+You are generating code for an influencer-brand collaboration MVP named reach.ai targeting the Indian market.
+The monorepo layout is:
+apps/
+frontend/         # Next.js App Router project
+api/              # NestJS REST & WebSocket server
+libs/
+common/           # Shared DTOs, utility functions
+prisma/             # schema.prisma & migrations
+.docker/
+postgres/         # init scripts
+
+# Coding conventions
+- **Language:** TypeScript everywhere (`.ts`, `.tsx`).  
+- **Style:** Prettier default, 2-space indent, single quotes.  
+- **Imports:** Use absolute import aliases (`@api/*`, `@frontend/*`, `@common/*`) via `tsconfig.paths`.  
+- **React:** Functional components, hooks only; no class components.  
+- **State:** TanStack Query + Zustand; no Redux.  
+- **Styling:** Tailwind utility-first; use shadcn/ui primitives; never inline CSS.  
+- **Database:** Prisma Client; migrations via `prisma migrate dev`; do **not** hand-write SQL.  
+- **Testing:** Follow **strict TDD** – every feature begins with a failing test.  
+  - Backend unit + integration: Jest + Supertest.  
+  - Front-end unit: React Testing Library + Jest DOM matchers.  
+  - E2E: Cypress in `apps/e2e`.  
+- **Commit messages:** Conventional Commits (`feat:`, `fix:`, `test:`…).  
+
+# Architectural rules
+1. **Controller ↔ Service ↔ Repository** layering in NestJS.  
+2. Never access Prisma in controllers – only via services.  
+3. Any external API call lives inside `/libs/common/infra/*.ts` with typed wrappers.  
+4. Feature flags go in `libs/common/config/featureFlags.ts`.
+
+# Cursor prompting
+- Whenever I ask for a new feature, generate **tests first**, then implementation.  
+- Use the directory structure above.  
+- If generating an endpoint or page, also generate a matching spec file.  
+- For migrations, output the `schema.prisma` diff and relevant seed data.
+
+# Path globs
+@/apps/api/**
+@/apps/frontend/**
+@/libs/common/**
