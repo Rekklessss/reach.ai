@@ -3,46 +3,296 @@ description:
 globs: 
 alwaysApply: true
 ---
+# reach.ai - Global Cursor Rules
 
-# Project context
-You are generating code for an influencer-brand collaboration MVP named reach.ai targeting the Indian market.
-The monorepo layout is:
-apps/
-frontend/         # Next.js App Router project
-api/              # NestJS REST & WebSocket server
-libs/
-common/           # Shared DTOs, utility functions
-prisma/             # schema.prisma & migrations
-.docker/
-postgres/         # init scripts
+## Project Overview
+You are working on **reach.ai**, an influencer-brand collaboration MVP targeting the Indian market. This is an NX monorepo with multiple applications and shared libraries.
 
-# Coding conventions
-- **Language:** TypeScript everywhere (`.ts`, `.tsx`).  
-- **Style:** Prettier default, 2-space indent, single quotes.  
-- **Imports:** Use absolute import aliases (`@api/*`, `@frontend/*`, `@common/*`) via `tsconfig.paths`.  
-- **React:** Functional components, hooks only; no class components.  
-- **State:** TanStack Query + Zustand; no Redux.  
-- **Styling:** Tailwind utility-first; use shadcn/ui primitives; never inline CSS.  
-- **Database:** Prisma Client; migrations via `prisma migrate dev`; do **not** hand-write SQL.  
-- **Testing:** Follow **strict TDD** – every feature begins with a failing test.  
-  - Backend unit + integration: Jest + Supertest.  
-  - Front-end unit: React Testing Library + Jest DOM matchers.  
-  - E2E: Cypress in `apps/e2e`.  
-- **Commit messages:** Conventional Commits (`feat:`, `fix:`, `test:`…).  
+## Architecture & Directory Structure
 
-# Architectural rules
-1. **Controller ↔ Service ↔ Repository** layering in NestJS.  
-2. Never access Prisma in controllers – only via services.  
-3. Any external API call lives inside `/libs/common/infra/*.ts` with typed wrappers.  
-4. Feature flags go in `libs/common/config/featureFlags.ts`.
+### Monorepo Layout
+```
+reach.ai/
+├── apps/
+│   ├── frontend/          # Next.js 15 App Router (React 19)
+│   ├── api/               # NestJS REST API
+│   ├── frontend-e2e/      # Cypress E2E tests for frontend
+│   └── api-e2e/          # API integration tests
+├── libs/                  # Shared libraries (create when needed)
+│   ├── common/           # Shared DTOs, utilities, types
+│   ├── ui/               # Shared UI components
+│   └── data-access/      # API clients and data layer
+└── tools/                # Build scripts and tooling
+```
 
-# Cursor prompting
-- Whenever I ask for a new feature, generate **tests first**, then implementation.  
-- Use the directory structure above.  
-- If generating an endpoint or page, also generate a matching spec file.  
-- For migrations, output the `schema.prisma` diff and relevant seed data.
+## Technical Stack
 
-# Path globs
-@/apps/api/**
-@/apps/frontend/**
-@/libs/common/**
+### Core Technologies
+- **Framework**: NX Monorepo (v21.1.3)
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
+- **Backend**: NestJS 10 with Express, TypeScript
+- **Database**: *Not configured yet - setup Prisma when needed*
+- **Package Manager**: pnpm (v10.12.1)
+- **Node Version**: 18.16.9+
+
+### Development Tools
+- **Linting**: ESLint 9 with NX plugin
+- **Formatting**: Prettier with single quotes
+- **Testing**: Jest + React Testing Library + Cypress
+- **Build**: SWC for TypeScript compilation
+- **Bundling**: Webpack (API), Next.js (Frontend)
+
+## Coding Standards
+
+### TypeScript Configuration
+- **Target**: ES2015
+- **Module**: ESNext
+- **Strict Mode**: Enabled for frontend
+- **Decorators**: Enabled (for NestJS)
+- **Base URL**: Project root with path mapping
+
+### Code Style
+- **Indentation**: 2 spaces
+- **Quotes**: Single quotes (')
+- **Semicolons**: As required by Prettier
+- **Line Endings**: LF
+- **Max Line Length**: 100 characters
+
+### Import Conventions
+```typescript
+// External libraries first
+import React from 'react';
+import { Controller, Get } from '@nestjs/common';
+
+// Internal imports with absolute paths (when libs exist)
+import { UserDTO } from '@libs/common';
+import { Button } from '@libs/ui';
+
+// Relative imports last
+import './styles.css';
+```
+
+### Naming Conventions
+- **Files**: kebab-case (`user-profile.tsx`, `auth.service.ts`)
+- **Directories**: kebab-case (`user-management`, `auth-module`)
+- **Components**: PascalCase (`UserProfile`, `AuthButton`)
+- **Functions/Variables**: camelCase (`getUserData`, `isLoggedIn`)
+- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`, `MAX_RETRY_COUNT`)
+- **Interfaces/Types**: PascalCase with descriptive names (`User`, `AuthResponse`)
+
+## Framework-Specific Guidelines
+
+### Next.js Frontend (apps/frontend)
+- **App Router**: Use exclusively, no pages directory
+- **Components**: Functional components with hooks only
+- **State Management**: React Query + Zustand (when needed)
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Forms**: React Hook Form + Zod validation
+- **Routing**: File-based routing with app directory
+
+#### Component Structure
+```typescript
+// apps/frontend/src/app/components/user-profile.tsx
+'use client';
+
+import React from 'react';
+import { Button } from '@/components/ui/button';
+
+interface UserProfileProps {
+  userId: string;
+}
+
+export function UserProfile({ userId }: UserProfileProps) {
+  return (
+    <div className="p-4">
+      <Button>Edit Profile</Button>
+    </div>
+  );
+}
+```
+
+### NestJS API (apps/api)
+- **Architecture**: Controller → Service → Repository pattern
+- **Modules**: Feature-based module organization
+- **DTOs**: Use class-validator for validation
+- **Database**: Prisma Client (when setup)
+- **Error Handling**: Custom exception filters
+- **Authentication**: JWT with Guards
+
+#### Service Structure
+```typescript
+// apps/api/src/app/users/users.service.ts
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto, UserDto } from './dto';
+
+@Injectable()
+export class UsersService {
+  async createUser(createUserDto: CreateUserDto): Promise<UserDto> {
+    // Implementation
+  }
+}
+```
+
+## Testing Strategy
+
+### Test File Naming
+- Unit tests: `*.spec.ts`
+- Integration tests: `*.integration.spec.ts`
+- E2E tests: `*.e2e-spec.ts`
+
+### Testing Patterns
+- **Frontend**: React Testing Library with user-centric tests
+- **Backend**: Jest with Supertest for integration tests
+- **E2E**: Cypress with custom commands
+- **Coverage**: Minimum 80% for new code
+
+## File Generation Rules
+
+### When Creating New Features
+1. **Start with tests**: Write failing tests first (TDD)
+2. **Create types/interfaces**: Define data contracts
+3. **Implement core logic**: Services, components, etc.
+4. **Add integration**: Controllers, pages, etc.
+5. **Update documentation**: README, API docs
+
+### Shared Libraries (libs/)
+Create shared libraries for:
+- **common**: DTOs, utilities, types, constants
+- **ui**: Reusable UI components
+- **data-access**: API clients, data fetching logic
+
+## NX Workspace Commands
+
+### Development
+```bash
+# Serve applications
+nx serve frontend        # Start Next.js dev server
+nx serve api            # Start NestJS dev server
+
+# Testing
+nx test frontend        # Run frontend unit tests
+nx test api            # Run API unit tests
+nx e2e frontend-e2e    # Run frontend E2E tests
+nx e2e api-e2e         # Run API integration tests
+
+# Linting & Formatting
+nx lint frontend       # Lint frontend
+nx lint api           # Lint API
+nx format:write       # Format all files
+```
+
+### Code Generation
+```bash
+# Generate new library
+nx g @nx/js:lib common --directory=libs
+
+# Generate NestJS components
+nx g @nx/nest:controller users --project=api
+nx g @nx/nest:service users --project=api
+nx g @nx/nest:module users --project=api
+
+# Generate Next.js components (manual creation preferred)
+```
+
+## Environment Configuration
+
+### Development Ports
+- **Frontend**: http://localhost:4200
+- **API**: http://localhost:3000/api
+- **Database**: localhost:5432 (when Prisma setup)
+
+### Environment Variables
+```bash
+# API (.env)
+DATABASE_URL="postgresql://..."
+JWT_SECRET="your-secret"
+API_PORT=3000
+
+# Frontend (.env.local)
+NEXT_PUBLIC_API_URL="http://localhost:3000/api"
+```
+
+## Git Workflow
+
+### Commit Messages
+Use Conventional Commits format:
+```
+feat(frontend): add user profile page
+fix(api): resolve authentication issue
+test(common): add user validation tests
+docs: update API documentation
+```
+
+### Branch Naming
+- **Feature**: `feat/user-authentication`
+- **Bug Fix**: `fix/login-validation`
+- **Hotfix**: `hotfix/security-patch`
+
+## Dependencies Management
+
+### Adding Dependencies
+```bash
+# Add to specific project
+nx add package-name --project=frontend
+nx add package-name --project=api
+
+# Add to workspace root (shared tooling)
+pnpm add -D package-name
+```
+
+### Common Dependencies
+- **Frontend**: @tanstack/react-query, zustand, tailwindcss, shadcn/ui
+- **Backend**: @nestjs/*, prisma, @nestjs/jwt, class-validator
+- **Shared**: zod, date-fns, lodash
+
+## Performance & Best Practices
+
+### Code Quality
+- Use TypeScript strict mode
+- Implement proper error boundaries
+- Use React.memo for expensive components
+- Implement proper loading states
+- Use proper HTTP status codes in API
+
+### Security
+- Validate all inputs
+- Use HTTPS in production
+- Implement rate limiting
+- Use proper authentication/authorization
+- Sanitize user inputs
+
+### Optimization
+- Code splitting with Next.js
+- Lazy loading for heavy components
+- Database query optimization
+- Proper caching strategies
+- Bundle size monitoring
+
+## AI Assistant Instructions
+
+When working on this codebase:
+1. **Follow TDD**: Always write tests first
+2. **Respect architecture**: Maintain separation of concerns
+3. **Use existing patterns**: Follow established conventions
+4. **Consider scalability**: Write maintainable, extensible code
+5. **Document changes**: Update relevant documentation
+6. **Think mobile-first**: Design responsive interfaces
+7. **Optimize for Indian users**: Consider network conditions, local preferences
+
+### Code Generation Preferences
+- Generate complete, runnable code
+- Include proper TypeScript types
+- Add comprehensive error handling
+- Include relevant tests
+- Follow established file structure
+- Use consistent naming conventions
+
+## Feature Development Process
+
+1. **Planning**: Understand requirements and design
+2. **Testing**: Write comprehensive test cases
+3. **Implementation**: Code following established patterns
+4. **Integration**: Ensure proper API contracts
+5. **Documentation**: Update relevant docs
+6. **Review**: Self-review for quality and standards
+7. **Deployment**: Ensure production readiness 
